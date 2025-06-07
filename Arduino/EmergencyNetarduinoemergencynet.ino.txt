@@ -1,0 +1,72 @@
+EmergencyNet/arduino/emergencynet.ino
+
+/*
+  EmergencyNet - Sistema IoT para Comunicação em Desastres
+*/
+
+int currentState = 0;
+int messageCount = 0;
+unsigned long lastStateChange = 0;
+const unsigned long STATE_INTERVAL = 3000;
+
+const int LED_STANDBY = 2;
+const int LED_EMERGENCIA = 3;
+const int LED_COMUNICANDO = 4;
+const int LED_CONTROLADO = 5;
+
+void setup() {
+  Serial.begin(9600);
+  
+  pinMode(LED_STANDBY, OUTPUT);
+  pinMode(LED_EMERGENCIA, OUTPUT);
+  pinMode(LED_COMUNICANDO, OUTPUT);
+  pinMode(LED_CONTROLADO, OUTPUT);
+  
+  Serial.println("EmergencyNet iniciado!");
+  updateLEDs();
+}
+
+void loop() {
+  unsigned long currentTime = millis();
+  
+  if (currentTime - lastStateChange >= STATE_INTERVAL) {
+    currentState = (currentState + 1) % 4;
+    messageCount++;
+    lastStateChange = currentTime;
+    
+    sendEmergencyData();
+    updateLEDs();
+  }
+  
+  delay(100);
+}
+
+void sendEmergencyData() {
+  Serial.print("{");
+  Serial.print("\"timestamp\":\"");
+  Serial.print(millis());
+  Serial.print("\",");
+  Serial.print("\"state\":");
+  Serial.print(currentState);
+  Serial.print(",");
+  Serial.print("\"count\":");
+  Serial.print(messageCount);
+  Serial.print(",");
+  Serial.print("\"device_id\":\"arduino_emergencia_01\",");
+  Serial.print("\"local\":\"Zona Norte SP\"");
+  Serial.println("}");
+}
+
+void updateLEDs() {
+  digitalWrite(LED_STANDBY, LOW);
+  digitalWrite(LED_EMERGENCIA, LOW);
+  digitalWrite(LED_COMUNICANDO, LOW);
+  digitalWrite(LED_CONTROLADO, LOW);
+  
+  switch(currentState) {
+    case 0: digitalWrite(LED_STANDBY, HIGH); break;
+    case 1: digitalWrite(LED_EMERGENCIA, HIGH); break;
+    case 2: digitalWrite(LED_COMUNICANDO, HIGH); break;
+    case 3: digitalWrite(LED_CONTROLADO, HIGH); break;
+  }
+}
